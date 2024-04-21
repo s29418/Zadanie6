@@ -39,6 +39,33 @@ public class AnimalsRepository : IAnimalsRepository
         return animals;
     }
 
+    public Animal GetAnimalById(int idAnimal)
+    {
+        using var con = new SqlConnection(_configuration["ConnectionStrings:DefaultConnection"]);
+        con.Open();
+
+        using var cmd = new SqlCommand();
+        cmd.Connection = con;
+        cmd.CommandText = "SELECT IdAnimal, Name, Description, Category, Area FROM Animal WHERE IdAnimal=@IdAnimal";
+        cmd.Parameters.AddWithValue("@IdAnimal", idAnimal);
+
+        var dr = cmd.ExecuteReader();
+        if (dr.Read())
+        {
+            Animal animal = new Animal
+            {
+                IdAnimal = (int)dr["IdAnimal"],
+                Name = dr["Name"].ToString(),
+                Description = dr["Description"].ToString(),
+                Category = dr["Category"].ToString(),
+                Area = dr["Area"].ToString()
+            };
+            return animal;
+        }
+
+        return null;
+    }
+
     public int CreateAnimal(Animal animal)
     {
         using var con = new SqlConnection(_configuration["ConnectionStrings:DefaultConnection"]);
