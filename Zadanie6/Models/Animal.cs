@@ -5,7 +5,7 @@ namespace Zadanie6.Animals;
 public class Animal
 {
     [Required]
-    public int IdAnimal { get; }
+    public int IdAnimal { get; set;  }
     
     [Required]
     [MaxLength(200)]
