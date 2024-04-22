@@ -4,7 +4,7 @@ namespace Zadanie6.Repositories;
 
 public interface IAnimalsRepository
 {
-    IEnumerable<Animal> GetAnimals();
+    IEnumerable<Animal> GetAnimals(string orderBy);
     Animal GetAnimalById(int id);
     int CreateAnimal(Animal animal);
     int UpdateAnimal(Animal animal);
