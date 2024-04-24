@@ -134,8 +134,4 @@ public class AnimalsRepository : IAnimalsRepository
         return cmd.ExecuteNonQuery();
     }
 
-    
-    
-    //"Data Source=db-mssql;Initial Catalog=2019SBD;Integrated Secuirity=True";
-
 }
