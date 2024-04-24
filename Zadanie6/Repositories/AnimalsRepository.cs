@@ -116,6 +116,7 @@ public class AnimalsRepository : IAnimalsRepository
         cmd.Parameters.AddWithValue("@Description", animal.Description);
         cmd.Parameters.AddWithValue("@Category", animal.Category);
         cmd.Parameters.AddWithValue("@Area", animal.Area);
+        cmd.Parameters.AddWithValue("@IdAnimal", animal.IdAnimal);
         
         return cmd.ExecuteNonQuery();
     }
