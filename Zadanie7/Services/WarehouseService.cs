@@ -14,19 +14,28 @@ public class WarehouseService : IWarehouseService
 
     public async Task<int> InsertProductWarehouse(int productId, int warehouseId, int amount, DateTime createdAt)
     {
-        if (await _warehouseRepository.ProductExists(productId) && await _warehouseRepository.WarehouseExists(warehouseId) && amount > 0)
+        if (await _warehouseRepository.ProductExists(productId))
         {
-            Order order = await _warehouseRepository.GetOrder(productId, amount, createdAt);
-            if (await _warehouseRepository.IsOrderFulfilled(order.IdOrder))
-            {
-                await _warehouseRepository.UpdateOrderFulfilledAt(order.IdOrder);
-                double price = await _warehouseRepository.CalculateTotalPrice(productId, amount);
-                return await _warehouseRepository.InsertProductWarehouse(productId, warehouseId, amount, price, order.IdOrder);
-            }
-
+            return -1;
+        }
+        if (await _warehouseRepository.WarehouseExists(warehouseId))
+        {
             return -2;
         }
-        return -1;
+
+        if (amount <= 0)
+        {
+            return -3;
+        }
+        
+        Order order = await _warehouseRepository.GetOrder(productId, amount, createdAt);
+        if (await _warehouseRepository.IsOrderFulfilled(order.IdOrder))
+        {
+            await _warehouseRepository.UpdateOrderFulfilledAt(order.IdOrder);
+            double price = await _warehouseRepository.CalculateTotalPrice(productId, amount);
+            return await _warehouseRepository.InsertProductWarehouse(productId, warehouseId, amount, price, order.IdOrder);
+        }
+        return -4;
     }
     
 }

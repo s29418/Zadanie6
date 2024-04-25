@@ -23,12 +23,7 @@ public class WarehouseRepository : IWarehouseRepository
         cmd.Parameters.AddWithValue("@IdWarehouse", id);
         
         var result = await cmd.ExecuteScalarAsync();
-        if ((int)result == 0)
-        {
-            return false;
-        }else{
-            return true;
-        }
+        return (int)result != 0;
     }
 
     public async Task<bool> ProductExists(int id)
@@ -39,15 +34,10 @@ public class WarehouseRepository : IWarehouseRepository
         await using var cmd = new SqlCommand();
         cmd.Connection = con;
         cmd.CommandText = "SELECT COUNT(*) FROM Product WHERE IdProduct = @IdProduct";
-        cmd.Parameters.AddWithValue("@IdProduct", id); // Dodajemy parametr do zapytania SQL
+        cmd.Parameters.AddWithValue("@IdProduct", id);
 
         var result = await cmd.ExecuteScalarAsync();
-        if ((int)result == 0)
-        {
-            return false;
-        }else{
-            return true;
-        }
+        return (int)result != 0;
     }
 
     public async Task<Order> GetOrder(int productId, int amount, DateTime createdAt)
@@ -130,14 +120,14 @@ public class WarehouseRepository : IWarehouseRepository
         
         await using var cmd = new SqlCommand();
         cmd.Connection = con;
-        cmd.CommandText = "INSERT INTO Product_Warehouse(IdWarehouse, IdProduct, IdOrder, Amount, Price, CreatedAt) VALUES (@IdWarehouse, @IdProduct, @IdOrder, @Amount, @Price, @CreatedAt)";
+        cmd.CommandText = "INSERT INTO Product_Warehouse(IdWarehouse, IdProduct, IdOrder, Amount, Price, CreatedAt) OUTPUT INSERTED.IdProduct_Warehouse VALUES (@IdWarehouse, @IdProduct, @IdOrder, @Amount, @Price, @CreatedAt)";
         cmd.Parameters.AddWithValue("@IdWarehouse", warehouseId);
         cmd.Parameters.AddWithValue("@IdProduct", productId);
         cmd.Parameters.AddWithValue("@IdOrder", orderId);
         cmd.Parameters.AddWithValue("@Amount", amount);
         cmd.Parameters.AddWithValue("@Price", price);
         cmd.Parameters.AddWithValue("@CreatedAt", DateTime.Now);
-        
-        return await cmd.ExecuteNonQueryAsync();
+
+        return (int)await cmd.ExecuteScalarAsync();
     }
 }
