@@ -12,13 +12,13 @@ public class WarehouseService : IWarehouseService
         _warehouseRepository = warehouseRepository;
     }
 
-    public async Task<int> InsertProductWarehouse(int productId, int warehouseId, int amount, DateTime createdAt)
+    public async Task<int> AddProductToWarehouse(int productId, int warehouseId, int amount, DateTime createdAt)
     {
-        if (await _warehouseRepository.ProductExists(productId))
+        if (!await _warehouseRepository.ProductExists(productId))
         {
             return -1;
         }
-        if (await _warehouseRepository.WarehouseExists(warehouseId))
+        if (!await _warehouseRepository.WarehouseExists(warehouseId))
         {
             return -2;
         }
@@ -28,14 +28,26 @@ public class WarehouseService : IWarehouseService
             return -3;
         }
         
-        Order order = await _warehouseRepository.GetOrder(productId, amount, createdAt);
-        if (await _warehouseRepository.IsOrderFulfilled(order.IdOrder))
+        int orderId = await _warehouseRepository.GetOrderId(productId, amount, createdAt);
+        if (orderId == -4)
         {
-            await _warehouseRepository.UpdateOrderFulfilledAt(order.IdOrder);
-            double price = await _warehouseRepository.CalculateTotalPrice(productId, amount);
-            return await _warehouseRepository.InsertProductWarehouse(productId, warehouseId, amount, price, order.IdOrder);
+            return -4;
         }
-        return -4;
+        
+        if (!await _warehouseRepository.IsOrderFulfilled(orderId))
+        {
+            await _warehouseRepository.UpdateOrderFulfilledAt(orderId);
+            decimal price = await _warehouseRepository.CalculateTotalPrice(productId, amount);
+            return await _warehouseRepository.AddProductToWarehouse(productId, warehouseId, amount, price, orderId);
+        }
+        return -5;
+    }
+
+    public async Task<int> AddProductToWarehouseUsingProcedure(int productId, int warehouseId, int amount,
+        DateTime createdAt)
+    {
+        return await _warehouseRepository.AddProductToWarehouseUsingProcedure(productId, warehouseId, amount,
+            createdAt);
     }
     
 }

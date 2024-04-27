@@ -2,5 +2,6 @@
 
 public interface IWarehouseService
 {
-    Task<int> InsertProductWarehouse(int productId, int warehouseId, int amount, DateTime createdAt);
+    Task<int> AddProductToWarehouse(int productId, int warehouseId, int amount, DateTime createdAt);
+    Task<int> AddProductToWarehouseUsingProcedure(int productId, int warehouseId, int amount, DateTime createdAt);
 }
