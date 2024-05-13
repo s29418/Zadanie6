@@ -135,3 +135,93 @@ public class AnimalsRepository : IAnimalsRepository
     }
 
 }
+
+public async Task<IEnumerable<PrescriptionDto>> GetPrescriptions(string doctorLastName)
+{
+    var prescriptions = new List<PrescriptionDto>();
+
+    try
+    {
+        using (var connection = new SqlConnection(_connectionString))
+        {
+            await connection.OpenAsync();
+
+            var query = @"SELECT p.IdPrescription, p.Date, p.DueDate, pt.LastName as PatientLastName, d.LastName as DoctorLastName 
+                          FROM Prescription p 
+                          INNER JOIN Patient pt ON p.IdPatient = pt.IdPatient 
+                          INNER JOIN Doctor d ON p.IdDoctor = d.IdDoctor";
+
+            if (!string.IsNullOrEmpty(doctorLastName))
+            {
+                query += " WHERE d.LastName = @DoctorLastName";
+            }
+
+            query += " ORDER BY p.Date DESC";
+
+            using (var command = new SqlCommand(query, connection))
+            {
+                if (!string.IsNullOrEmpty(doctorLastName))
+                {
+                    command.Parameters.AddWithValue("@DoctorLastName", doctorLastName);
+                }
+
+                using (var reader = await command.ExecuteReaderAsync())
+                {
+                    while (await reader.ReadAsync())
+                    {
+                        Prescription prescription = new Prescription
+                        {
+                            IdPrescription = (int)dr["IdPrescription"],
+                            Date = ((DateTime)dr["Date"]).ToString("yyyy-MM-dd"),
+                            DueDate = ((DateTime)dr["DueDate"]).ToString("yyyy-MM-dd"),
+                            PatientLastName = dr["PatientLastName"].ToString(),
+                            DoctorLastName = dr["DoctorLastName"].ToString()
+                        };
+
+                        prescriptions.Add(prescription);
+                    }
+                }
+            }
+        }
+    }
+    catch (Exception ex)
+    {
+        throw new Exception("Błąd podczas pobierania recept: " + ex.Message);
+    }
+
+    return prescriptions;
+}
+public async Task<Prescription> AddPrescription(Prescription prescription)
+{
+    using (var connection = new SqlConnection(_connectionString))
+    {
+        await connection.OpenAsync();
+
+        using (var command = new SqlCommand())
+        {
+            command.Connection = connection;
+            command.CommandText = "INSERT INTO Prescription (Date, DueDate, IdPatient, IdDoctor) OUTPUT INSERTED.IdPrescription VALUES (@Date, @DueDate, @IdPatient, @IdDoctor)";
+            command.Parameters.AddWithValue("@Date", prescription.Date);
+            command.Parameters.AddWithValue("@DueDate", prescription.DueDate);
+            command.Parameters.AddWithValue("@IdPatient", prescription.IdPatient);
+            command.Parameters.AddWithValue("@IdDoctor", prescription.IdDoctor);
+
+            prescription.IdPrescription = (int)await command.ExecuteScalarAsync();
+        }
+    }
+
+    return prescription;
+}
+[HttpPost]
+public async Task<IActionResult> AddPrescription([FromBody] Prescription prescription)
+{
+    try
+    {
+        var addedPrescription = await _prescriptionService.AddPrescription(prescription);
+        return Ok(addedPrescription);
+    }
+    catch (Exception ex)
+    {
+        return NotFound(ex.Message);
+    }
+}
